@@ -1,0 +1,73 @@
+Program.Sub.ScreenSU.Start
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+' RAN 01/07/2015
+' Project Name:  PORCVD 7354 Kopp Glass, Inc custom pricing calculator
+
+F.Intrinsic.Control.SetErrorHandler("Main_Err")
+F.Intrinsic.Control.ClearErrors
+
+V.Local.sError.Declare(String)
+
+F.Intrinsic.Control.ClearErrors
+V.Local.sSql.Declare(String)
+V.Local.sPart.Declare(String)
+V.Local.sRev.Declare(String)
+V.Local.sLoc.Declare(String)
+V.Local.lQty.Declare(Long)
+V.Local.fPrice.Declare(Float)
+
+
+F.Intrinsic.Control.if(V.Caller.Hook,=,"12120")
+	F.ODBC.Connection!con.OpenConnection(V.Ambient.PDSN,V.Ambient.PUser,V.Ambient.PPass)
+
+'	V.Local.sPart.Set(V.passed.000052)
+'	V.Local.sRev.Set(V.passed.000053)
+	V.Local.sLoc.Set(V.passed.000054)
+	V.Local.lQty.Set(V.passed.000007)
+
+	F.Intrinsic.String.GSSPartString(V.passed.000052,V.passed.000053,V.Local.sPart)
+
+'	F.Intrinsic.String.RPad(V.Local.sPart," ",6,V.Local.sPart)
+'	F.Intrinsic.String.Left(V.Local.sPart,6,V.Local.sPart)
+'	F.Intrinsic.String.Build("{0}{1}",V.Local.sPart,V.Local.sRev,V.Local.sPart)
+
+	F.Intrinsic.String.Build("select disc_qty_1,disc_price_1,(disc_qty_1 * disc_price_1) as price from v_OE_Discounts where Part = '{0}' and Location = '{1}' ",V.Local.sPart,V.Local.sLoc,V.Local.sSql)
+	F.ODBC.Connection!con.OpenLocalRecordsetRO("rst",V.Local.sSql)
+	F.Intrinsic.Control.If(V.ODBC.con!rst.EOF,=,False)
+		F.Intrinsic.Control.If(V.Local.lQty,<,V.ODBC.con!rst.FieldVal!disc_qty_1)
+			F.Intrinsic.Math.Div(V.ODBC.con!rst.FieldVal!Price,V.Local.lQty.Long,V.Local.fPrice)
+			V.passed.000009.Set(V.Local.fPrice)
+			V.passed.000010.Set("OVRD Scripted Price")
+		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.EndIf
+	F.ODBC.con!rst.Close
+
+	F.ODBC.Connection!con.Close
+
+F.Intrinsic.Control.EndIf
+F.Intrinsic.Control.End
+
+
+
+
+F.Intrinsic.Control.ExitSub
+
+F.Intrinsic.Control.Label("Main_Err")
+F.Intrinsic.Control.If(V.Ambient.ErrorNumber,<>,0)
+	Function.Intrinsic.String.Concat("Project: GCG_3517_AutoCalculatePremiumPrice.gas",V.Ambient.Newline,V.Ambient.Newline,"Subroutine: ",V.Ambient.CurrentSubroutine,V.Ambient.NewLine,"Error Occurred ",V.Ambient.ErrorNumber," with description ",V.Ambient.ErrorDescription,V.Local.sError)
+	F.Intrinsic.UI.Msgbox(V.Local.sError)
+Function.Intrinsic.Control.EndIf
+
+
+Program.Sub.Main.End
+
+Program.Sub.Comments.Start
+${$0$}$Pricebreak$}$RAN$}$1/7/2016
+Program.Sub.Comments.End
+
